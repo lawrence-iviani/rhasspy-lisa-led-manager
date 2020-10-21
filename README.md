@@ -1,18 +1,25 @@
-# Rhasspy Hermes Dialogue Manager
+# Rhasspy Lisa Led Manager
 
-[![Continous Integration](https://github.com/rhasspy/rhasspy-dialogue-hermes/workflows/Tests/badge.svg)](https://github.com/rhasspy/rhasspy-dialogue-hermes/actions)
 [![GitHub license](https://img.shields.io/github/license/rhasspy/rhasspy-dialogue-hermes.svg)](https://github.com/rhasspy/rhasspy-dialogue-hermes/blob/master/LICENSE)
 
-Implements `hermes/dialogueManager` functionality from [Hermes protocol](https://docs.snips.ai/reference/hermes).
+Listen to `hermes/dialogueManager` messages ([Hermes protocol](https://docs.snips.ai/reference/hermes)) and manage the underlay led hw.
+
+Feature TODO:
+* Automnatic (an emebedded behaviour with events)
+* Pair Event:Programm programmable 
+* API Call (e.g an external Session Manager)
 
 ## Installation
+
+Apperently configure and make install are not supported, the environment for python is the system until an environment is not added. 
 
 ```bash
 $ git clone https://github.com/rhasspy/rhasspy-dialogue-hermes
 $ cd rhasspy-dialogue-hermes
-$ ./configure
-$ make
-$ make install
+# $ ./configure
+# $ make
+# $ make install
+$ sudo python3 setup.py install
 ```
 
 ## Running
