@@ -1,4 +1,4 @@
 """PyInstaller entry point"""
-from rhasspydialogue_hermes.__main__ import main
+from rhasspylisa_ledmanager.__main__ import main
 
 main()

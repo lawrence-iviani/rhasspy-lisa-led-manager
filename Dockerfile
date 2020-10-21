@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # Dockerfile for Rhasspy Dialogue Manager
-# (https://github.com/rhasspy/rhasspy-dialogue-hermes)
+# (https://github.com/rhasspy/rhasspy-lisa-led-manager)
 #
 # Requires Docker buildx: https://docs.docker.com/buildx/working-with-buildx/
 # See scripts/build-docker.sh
@@ -62,7 +62,7 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 FROM build-$TARGETARCH$TARGETVARIANT as build
 
-ENV APP_DIR=/usr/lib/rhasspy-dialogue-hermes
+ENV APP_DIR=/usr/lib/rhasspy-lisa-led-manager
 
 COPY requirements.txt Makefile ${APP_DIR}/
 COPY scripts/ ${APP_DIR}/scripts/
@@ -113,9 +113,9 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 FROM run-$TARGETARCH$TARGETVARIANT
 
-ENV APP_DIR=/usr/lib/rhasspy-dialogue-hermes
+ENV APP_DIR=/usr/lib/rhasspy-lisa-led-manager
 COPY --from=build ${APP_DIR}/ ${APP_DIR}/
 COPY bin/ ${APP_DIR}/bin/
-COPY rhasspydialogue_hermes/ ${APP_DIR}/rhasspydialogue_hermes
+COPY rhasspylisa_ledmanager/ ${APP_DIR}/rhasspylisa_ledmanager
 
-ENTRYPOINT ["bash", "/usr/lib/rhasspy-dialogue-hermes/bin/rhasspy-dialogue-hermes"]
+ENTRYPOINT ["bash", "/usr/lib/rhasspy-lisa-led-manager/bin/rhasspy-lisa-led-manager"]

@@ -23,7 +23,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="rhasspydialogue_hermes",
+    name="rhasspylisa_ledmanager",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,5 +37,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name="rhasspydialogue_hermes",
+    name="rhasspylisa_ledmanager",
 )

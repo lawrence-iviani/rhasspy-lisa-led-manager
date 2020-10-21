@@ -3,5 +3,5 @@
 !Makefile
 !scripts/create-venv.sh
 
-!bin/rhasspy-dialogue-hermes
-!rhasspydialogue_hermes/*.py
+!bin/rhasspy-lisa-led-manager
+!rhasspylisa_ledmanager/*.py

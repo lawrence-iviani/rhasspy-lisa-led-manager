@@ -12,4 +12,4 @@ if [[ -d "${venv}" ]]; then
 fi
 
 export PYTHONPATH="${src_dir}:${PYTHONPATH}"
-python3 -m rhasspydialogue_hermes "$@"
+python3 -m rhasspylisa_ledmanager "$@"

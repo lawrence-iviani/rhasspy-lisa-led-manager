@@ -1,4 +1,4 @@
-Package: rhasspy-dialogue-hermes
+Package: rhasspy-lisa-led-manager
 Version: ${version}
 Section: utils
 Priority: optional

@@ -38,6 +38,6 @@ docker buildx build \
         -f "${DOCKERFILE}" \
         "--platform=${PLATFORMS}" \
         --build-arg "DOCKER_REGISTRY=${DOCKER_REGISTRY}" \
-        --tag "${DOCKER_REGISTRY}/rhasspy/rhasspy-dialogue-hermes:latest" \
+        --tag "${DOCKER_REGISTRY}/rhasspy/rhasspy-lisa-led-manager:latest" \
         --push \
         "$@"

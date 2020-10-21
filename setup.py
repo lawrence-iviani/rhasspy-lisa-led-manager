@@ -1,4 +1,4 @@
-"""Setup script for rhasspy-dialogue-hermes package"""
+"""Setup script for rhasspy-lisa-led-manager package"""
 from pathlib import Path
 
 import setuptools
@@ -22,16 +22,16 @@ with open(version_path, "r") as version_file:
     version = version_file.read().strip()
 
 setuptools.setup(
-    name="rhasspy-dialogue-hermes",
+    name="rhasspy-lisa-led-manager",
     version=version,
-    author="Michael Hansen",
-    author_email="mike@rhasspy.org",
-    url="https://github.com/rhasspy/rhasspy-dialogue-hermes",
+    author="Lawrence Iviani",
+    author_email="lawrence.iviani@gmail.com",
+    url="https://github.com/rhasspy/rhasspy-lisa-led-manager",
     packages=setuptools.find_packages(),
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "rhasspy-dialogue-hermes = rhasspydialogue_hermes.__main__:main"
+            "rhasspy-lisa-led-manager = rhasspylisa_ledmanager.__main__:main"
         ]
     },
     classifiers=[
