@@ -8,11 +8,10 @@ Implements `hermes/dialogueManager` functionality from [Hermes protocol](https:/
 ## Installation
 
 ```bash
-$ git clone https://github.com/rhasspy/rhasspy-lisa-led-manager
+$ git clone https://github.com/lawrence-iviani/rhasspy-lisa-led-manager
 $ cd rhasspy-lisa-led-manager
-$ ./configure
-$ make
-$ make install
+# Only installation in system, hack for virtual environment otherwise
+$ sudo python3 setup.py install
 ```
 
 ## Running
