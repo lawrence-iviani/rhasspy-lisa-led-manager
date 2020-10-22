@@ -81,8 +81,10 @@ SoundsType = typing.Union[
 	HotwordToggleOn,
 ]
 
-# -----------------------------------------------------------------------------
+import threading
+from time import sleep
 
+# -----------------------------------------------------------------------------
 
 @dataclass
 class SessionInfo:
@@ -109,7 +111,7 @@ class SessionInfo:
 
 # pylint: disable=W0511
 # TODO: Entity injection
-
+from .pixels import Respeaker4MicArray
 
 class LedManagerHermesMqtt(HermesClient):
 	"""Hermes MQTT server for Rhasspy Dialogue Manager."""
@@ -124,10 +126,13 @@ class LedManagerHermesMqtt(HermesClient):
 	):
 		super().__init__("rhasspylisa_ledmanager", client, site_ids=site_ids)
 		self.subscribe(
-			DialogueStartSession,
-			DialogueContinueSession,
-			DialogueEndSession,
-			DialogueConfigure,
+			#DialogueStartSession,
+			DialogueSessionStarted,
+			DialogueSessionEnded,
+			DialogueSessionQueued,
+			#DialogueContinueSession,
+			#DialogueEndSession,
+			#DialogueConfigure,
 			TtsSayFinished,
 			NluIntent,
 			NluIntentNotRecognized,
@@ -135,8 +140,70 @@ class LedManagerHermesMqtt(HermesClient):
 			HotwordDetected,
 			AudioPlayFinished,
 		)
+		_LOGGER.info("Loading Respeaker4MicArray")
+		self.pixels = Respeaker4MicArray()
 		_LOGGER.debug("init eneded")
 	# -------------------------------------------------------------------------
+
+	
+	def wakeup(self):
+		_LOGGER.debug("enter wakeup")
+		self.pixels.off()
+		self.pixels.wakeup()
+		# sleep(1)
+		# self.pixels.off()
+		_LOGGER.debug("exit wakeup")
+
+	def speak(self):
+		_LOGGER.debug("enter speak")
+		self.pixels.off()
+		self.pixels.speak()
+		# sleep(5)
+		# self.pixels.off()
+		_LOGGER.debug("exit speak")
+		
+	def end_speak(self):
+		_LOGGER.debug("enter end_speak")
+		self.pixels.off()
+		# sleep(0.1)
+		# for i in range(5):
+			# self.pixels.speak()
+			# sleep(0.1)
+			# self.pixels.off()
+			# sleep(0.1)
+		# self.pixels.off()
+		_LOGGER.debug("exit end_speak")
+		
+	def think(self):
+		_LOGGER.debug("enter think")
+		self.pixels.off()
+		self.pixels.think()
+		# for i in range(2):
+			# self.pixels.think()
+			# sleep(0.5)
+			# self.pixels.off()
+			# sleep(0.5)
+		_LOGGER.debug("exit think")
+
+	def not_recognized(self):
+		_LOGGER.debug("enter not_recognized")
+		self.pixels.off()
+		# for i in range(5):
+			# self.pixels.think()
+			# sleep(0.25)
+			# self.pixels.off()
+			# sleep(0.25)
+		_LOGGER.debug("exit not_recognized")
+	
+	def recognized(self):
+		_LOGGER.debug("enter recognized")
+#		self.pixels.off()
+		self.pixels.listen()
+		# sleep(0.25)
+		# self.pixels.speak()
+		# sleep(0.25)
+		# self.pixels.off()
+		_LOGGER.debug("exit recognized")
 
 	async def on_message(
 		self,
@@ -145,9 +212,11 @@ class LedManagerHermesMqtt(HermesClient):
 		session_id: typing.Optional[str] = None,
 		topic: typing.Optional[str] = None,
 	) -> GeneratorType:
-		_LOGGER.debug("{}: {}".format(type(message), message))
+		# _LOGGER.debug("{}: {}".format(type(message), message))
 		if isinstance(message, AsrTextCaptured):
 			_LOGGER.debug("AsrTextCaptured: {}".format(message))
+			threading.Thread(target=self.think,).start()# args=(1,))
+			
 			# ASR transcription received
 			# if (not message.session_id) or (
 				# not self.valid_session_id(message.session_id)
@@ -165,16 +234,26 @@ class LedManagerHermesMqtt(HermesClient):
 
 		elif isinstance(message, AudioPlayFinished):
 			# Audio output finished
-			play_finished_event = self.message_events[AudioPlayFinished].get(message.id)
-			_LOGGER.debug("AudioPlayFinished: {} - event: {}".format(message, play_finished_event))
+			# play_finished_event = self.message_events[AudioPlayFinished].get(message.id)
+			_LOGGER.debug("AudioPlayFinished: {}".format(message))
 			# if play_finished_event:
 				# play_finished_event.set()
 		elif isinstance(message, DialogueConfigure):
 			_LOGGER.debug("DialogueConfigure: {}".format(message))
 			# Configure intent filter
 			# self.handle_configure(message)
-		elif isinstance(message, DialogueStartSession):
-			_LOGGER.debug("DialogueConfigure: {}".format(message))
+		# elif isinstance(message, DialogueStartSession):
+		elif isinstance(message, DialogueSessionStarted):
+			_LOGGER.debug("DialogueSessionStarted: {}".format(message))
+			threading.Thread(target=self.speak,).start()# args=(1,))
+			
+			# Start session
+			# async for start_result in self.handle_start(message):
+				# yield start_result
+		elif isinstance(message, DialogueSessionEnded):
+			_LOGGER.debug("DialogueSessionEnded: {}".format(message))
+			threading.Thread(target=self.end_speak,).start()# args=(1,))
+			
 			# Start session
 			# async for start_result in self.handle_start(message):
 				# yield start_result
@@ -185,11 +264,13 @@ class LedManagerHermesMqtt(HermesClient):
 				# yield continue_result
 		elif isinstance(message, DialogueEndSession):
 			_LOGGER.debug("DialogueEndSession: {}".format(message))
+			# self.pixels.off()
 			# End session
 			# async for end_result in self.handle_end(message):
 				# yield end_result
 		elif isinstance(message, HotwordDetected):
 			_LOGGER.debug("HotwordDetected: {}".format(message))
+			threading.Thread(target=self.wakeup,).start()# args=(1,))
 			# Wakeword detected
 			# assert topic, "Missing topic"
 			# wakeword_id = HotwordDetected.get_wakeword_id(topic)
@@ -200,10 +281,12 @@ class LedManagerHermesMqtt(HermesClient):
 				# _LOGGER.warning("Ignoring wake word id=%s", wakeword_id)
 		elif isinstance(message, NluIntent):
 			_LOGGER.debug("NluIntent: {}".format(message))
+			threading.Thread(target=self.recognized,).start()# args=(1,))
 			# Intent recognized
 			# await self.handle_recognized(message)
 		elif isinstance(message, NluIntentNotRecognized):
 			_LOGGER.debug("NluIntentNotRecognized: {}".format(message))
+			threading.Thread(target=self.not_recognized,).start()# args=(1,))
 			# Intent not recognized
 			# async for play_error_result in self.maybe_play_sound(
 				# "error", site_id=message.site_id
