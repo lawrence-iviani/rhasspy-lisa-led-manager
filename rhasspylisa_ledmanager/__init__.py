@@ -111,13 +111,33 @@ class SessionInfo:
 
 # pylint: disable=W0511
 # TODO: Entity injection
-from .pixels import Respeaker4MicArray
 
-class LedManagerHermesMqtt(HermesClient):
+from .pixels import Respeaker4MicArray, MatrixVoice, DummyBoard
+from .pixels import Respeaker4MicArray, MatrixVoice, DummyBoard
+from .led_patterns.google_home_led_pattern import GoogleHomeLedPattern
+from .led_patterns.alexa_led_pattern import AlexaLedPattern
+
+defualt_pattern = 'GoogleHome'
+available_hw = {'Respeaker4MicArray': Respeaker4MicArray,
+				'MatrixVoice': MatrixVoice,
+				'DummyBoard': DummyBoard,
+				} #'': None}
+available_led_patterns = {'GoogleHome': GoogleHomeLedPattern,
+						  'Alexa': AlexaLedPattern,
+					     } #'': None}				
+
+				
+class LedManagerHermesMqttException(Exception):
+	pass
+
+
+class LedManagerHermesMqtt(HermesClient): 
 	"""Hermes MQTT server for Rhasspy Dialogue Manager."""
 
 	def __init__(self,
 				client,
+				hw_led,
+				pattern=None,
 				site_ids: typing.Optional[typing.List[str]] = None,
 	#       wakeword_ids: typing.Optional[typing.List[str]] = None,
 	#       sound_paths: typing.Optional[typing.Dict[str, Path]] = None,
@@ -140,12 +160,30 @@ class LedManagerHermesMqtt(HermesClient):
 			HotwordDetected,
 			AudioPlayFinished,
 		)
-		_LOGGER.info("Loading Respeaker4MicArray")
-		self.pixels = Respeaker4MicArray()
-		_LOGGER.debug("init eneded")
+		if pattern is None:
+			_LOGGER.info("Using default pattern: " + str(defualt_pattern))
+			pattern = defualt_pattern
+		if hw_led in  available_hw:
+			if pattern in available_led_patterns:
+				self.pixels = available_hw[hw_led](pattern=available_led_patterns[pattern])  # available_hw[hw_led]# Respeaker4MicArray()
+			else:
+				self.pixels = available_hw[hw_led](pattern=available_led_patterns[defualt_pattern])
+			_LOGGER.info("Loading hw: " + hw_led)
+		else:
+			_LOGGER.error("Hw board  " + hw_led + " not recognized, available " + str(available_hw.keys()))
+			raise LedManagerHermesMqttException("Hw board not recognized: " + str(hw_led))
+		
 	# -------------------------------------------------------------------------
 
-	
+	@staticmethod
+	def get_available_hw():
+		return available_hw.keys()
+
+	@staticmethod
+	def get_available_patterns():
+		return available_led_patterns.keys()
+
+	# TODO: check all site_ids, reply should be only for the site id specified 
 	def wakeup(self):
 		_LOGGER.debug("enter wakeup")
 		self.pixels.off()

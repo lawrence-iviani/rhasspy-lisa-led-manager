@@ -8,3 +8,4 @@ pyinstaller/
 .vscode/
 download/
 etc/qemu-*
+build/

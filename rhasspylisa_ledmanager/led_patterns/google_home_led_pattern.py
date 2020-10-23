@@ -22,89 +22,82 @@ try:
 except ImportError:
     import Queue as Queue
 
+from ..pixels import LedPattern
 
-class GoogleHomeLedPattern(object):
-    def __init__(self, show=None):
-        self.basis = numpy.array([0] * 4 * 12)
-        self.basis[0 * 4 + 1] = 2
-        self.basis[3 * 4 + 1] = 1
-        self.basis[3 * 4 + 2] = 1
-        self.basis[6 * 4 + 2] = 2
-        self.basis[9 * 4 + 3] = 2
+class GoogleHomeLedPattern(LedPattern):
+	def __init__(self, number, show=None):
+		super().__init__(number=number, show=show)
+		self.basis = numpy.array([0] * 4 * self.pixels_number)
+		self.basis[0 * 4 + 1] = 2
+		self.basis[3 * 4 + 1] = 1
+		self.basis[3 * 4 + 2] = 1
+		self.basis[6 * 4 + 2] = 2
+		self.basis[9 * 4 + 3] = 2
+		self.pixels = self.basis * 24
 
-        self.pixels = self.basis * 24
+	def wakeup(self, direction=0):
+		position = int((direction + 15) / 30) % self.pixels_number
 
-        if not show or not callable(show):
-            def dummy(data):
-                pass
-            show = dummy
+		basis = numpy.roll(self.basis, position * 4)
+		for i in range(1, 25):
+			pixels = basis * i
+			self.show(pixels)
+			time.sleep(0.005)
 
-        self.show = show
-        self.stop = False
+		pixels =  numpy.roll(pixels, 4)
+		self.show(pixels)
+		time.sleep(0.1)
 
-    def wakeup(self, direction=0):
-        position = int((direction + 15) / 30) % 12
+		for i in range(2):
+			new_pixels = numpy.roll(pixels, 4)
+			self.show(new_pixels * 0.5 + pixels)
+			pixels = new_pixels
+			time.sleep(0.1)
 
-        basis = numpy.roll(self.basis, position * 4)
-        for i in range(1, 25):
-            pixels = basis * i
-            self.show(pixels)
-            time.sleep(0.005)
+		self.show(pixels)
+		self.pixels = pixels
 
-        pixels =  numpy.roll(pixels, 4)
-        self.show(pixels)
-        time.sleep(0.1)
+	def listen(self):
+		pixels = self.pixels
+		for i in range(1, 25):
+			self.show(pixels * i / 24)
+			time.sleep(0.01)
 
-        for i in range(2):
-            new_pixels = numpy.roll(pixels, 4)
-            self.show(new_pixels * 0.5 + pixels)
-            pixels = new_pixels
-            time.sleep(0.1)
+	def think(self):
+		pixels = self.pixels
 
-        self.show(pixels)
-        self.pixels = pixels
+		while not self.stop:
+			pixels = numpy.roll(pixels, 4)
+			self.show(pixels)
+			time.sleep(0.2)
 
-    def listen(self):
-        pixels = self.pixels
-        for i in range(1, 25):
-            self.show(pixels * i / 24)
-            time.sleep(0.01)
+		t = 0.1
+		for i in range(0, 5):
+			pixels = numpy.roll(pixels, 4)
+			self.show(pixels * (4 - i) / 4)
+			time.sleep(t)
+			t /= 2
 
-    def think(self):
-        pixels = self.pixels
+		self.pixels = pixels
 
-        while not self.stop:
-            pixels = numpy.roll(pixels, 4)
-            self.show(pixels)
-            time.sleep(0.2)
+	def speak(self):
+		pixels = self.pixels
+		step = 1
+		brightness = 5
+		while not self.stop:
+			self.show(pixels * brightness / 24)
+			time.sleep(0.02)
 
-        t = 0.1
-        for i in range(0, 5):
-            pixels = numpy.roll(pixels, 4)
-            self.show(pixels * (4 - i) / 4)
-            time.sleep(t)
-            t /= 2
+			if brightness <= 5:
+				step = 1
+				time.sleep(0.4)
+			elif brightness >= 24:
+				step = -1
+				time.sleep(0.4)
 
-        self.pixels = pixels
+			brightness += step
 
-    def speak(self):
-        pixels = self.pixels
-        step = 1
-        brightness = 5
-        while not self.stop:
-            self.show(pixels * brightness / 24)
-            time.sleep(0.02)
-
-            if brightness <= 5:
-                step = 1
-                time.sleep(0.4)
-            elif brightness >= 24:
-                step = -1
-                time.sleep(0.4)
-
-            brightness += step
-
-    def off(self):
-        self.show([0] * 4 * 12)
+	def off(self):
+		self.show([0] * 4 * self.pixels_number)
 
 
