@@ -12,6 +12,11 @@ $ git clone https://github.com/lawrence-iviani/rhasspy-lisa-led-manager
 $ cd rhasspy-lisa-led-manager
 # Only installation in system, hack for virtual environment otherwise
 $ sudo python3 setup.py install
+
+# TODO: common message are defined in https://github.com/lawrence-iviani/rhasspy-lisa-odas-hermes/tree/master/lisa
+# this need a refactor, better wait for a concept of deployment from one point (e.g. repository lisa with git links)
+# for now the workaround is to create a link manually. (adjust if needed the path)
+$ ln -s /home/pi/sw/rhasspy-lisa-odas-hermes/lisa
 ```
 
 ## Running
