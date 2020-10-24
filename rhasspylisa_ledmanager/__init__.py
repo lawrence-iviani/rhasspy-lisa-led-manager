@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
+import threading
+from time import sleep
+
 from rhasspyhermes.asr import (
 	AsrStartListening,
 	AsrStopListening,
@@ -43,8 +46,16 @@ from rhasspyhermes.wake import (
 	HotwordToggleReason,
 )
 
+# TODO: a mechanism for common storage of messages definition
+# similar to https://github.com/rhasspy/rhasspy-hermes which contains all rhasspyhermes.xxx_messages
+# Now is a link!!!
+from lisa.rhasppy_messages import SSL_src_msg, SST_src_msg
+
 from .utils import get_wav_duration
 
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.DEBUG)
 _LOGGER = logging.getLogger("rhasspylisa_ledmanager")
 
 # -----------------------------------------------------------------------------
@@ -81,30 +92,31 @@ SoundsType = typing.Union[
 	HotwordToggleOn,
 ]
 
-import threading
-from time import sleep
+
 
 # -----------------------------------------------------------------------------
 
-@dataclass
-class SessionInfo:
-	"""Information for an active or queued dialogue session."""
+# @dataclass
+# class SessionInfo:
+	# """Information for an active or queued dialogue session."""
 
-	session_id: str
-	site_id: str
-	start_session: DialogueStartSession
-	custom_data: typing.Optional[str] = None
-	intent_filter: typing.Optional[typing.List[str]] = None
-	send_intent_not_recognized: bool = False
-	continue_session: typing.Optional[DialogueContinueSession] = None
-	text_captured: typing.Optional[AsrTextCaptured] = None
-	step: int = 0
-	send_audio_captured: bool = True
-	lang: typing.Optional[str] = None
+	# session_id: str
+	# site_id: str
+	# start_session: DialogueStartSession
+	# custom_data: typing.Optional[str] = None
+	# intent_filter: typing.Optional[typing.List[str]] = None
+	# send_intent_not_recognized: bool = False
+	# continue_session: typing.Optional[DialogueContinueSession] = None
+	# text_captured: typing.Optional[AsrTextCaptured] = None
+	# step: int = 0
+	# send_audio_captured: bool = True
+	# lang: typing.Optional[str] = None
 
-	# Wake word that activated this session (if any)
-	detected: typing.Optional[HotwordDetected] = None
-	wakeword_id: str = ""
+	# # Wake word that activated this session (if any)
+	# detected: typing.Optional[HotwordDetected] = None
+	# wakeword_id: str = ""
+
+
 
 
 # -----------------------------------------------------------------------------
@@ -112,10 +124,11 @@ class SessionInfo:
 # pylint: disable=W0511
 # TODO: Entity injection
 
-from .pixels import Respeaker4MicArray, MatrixVoice, DummyBoard
-from .pixels import Respeaker4MicArray, MatrixVoice, DummyBoard
+from .pixels import Respeaker4MicArray, MatrixVoice, DummyBoard, LED_MIN_VAL, LED_MAX_VAL
 from .led_patterns.google_home_led_pattern import GoogleHomeLedPattern
 from .led_patterns.alexa_led_pattern import AlexaLedPattern
+from .energy_DOAs import localized_sources, tracked_sources
+
 
 defualt_pattern = 'GoogleHome'
 available_hw = {'Respeaker4MicArray': Respeaker4MicArray,
@@ -145,6 +158,24 @@ class LedManagerHermesMqtt(HermesClient):
 	#       no_sound: typing.Optional[typing.List[str]] = None,
 	):
 		super().__init__("rhasspylisa_ledmanager", client, site_ids=site_ids)
+		
+		if pattern is None:
+			_LOGGER.info("Using default pattern: " + str(defualt_pattern))
+			pattern = defualt_pattern
+		if hw_led in  available_hw:
+			if pattern in available_led_patterns:
+				self.pixels = available_hw[hw_led](pattern=available_led_patterns[pattern])  # available_hw[hw_led]# Respeaker4MicArray()
+			else:
+				self.pixels = available_hw[hw_led](pattern=available_led_patterns[defualt_pattern])
+			_LOGGER.info("Loading hw: " + hw_led)
+		else:
+			_LOGGER.error("Hw board  " + hw_led + " not recognized, available " + str(available_hw.keys()))
+			raise LedManagerHermesMqttException("Hw board not recognized: " + str(hw_led))
+		
+		self.tracked_energies = tracked_sources(callback=self.tracked_sources_update)
+		self.localized_energies = localized_sources(callback=self.localized_sources_update)
+		
+		# Subscribe Hermese Protocol topics
 		self.subscribe(
 			#DialogueStartSession,
 			DialogueSessionStarted,
@@ -160,18 +191,23 @@ class LedManagerHermesMqtt(HermesClient):
 			HotwordDetected,
 			AudioPlayFinished,
 		)
-		if pattern is None:
-			_LOGGER.info("Using default pattern: " + str(defualt_pattern))
-			pattern = defualt_pattern
-		if hw_led in  available_hw:
-			if pattern in available_led_patterns:
-				self.pixels = available_hw[hw_led](pattern=available_led_patterns[pattern])  # available_hw[hw_led]# Respeaker4MicArray()
-			else:
-				self.pixels = available_hw[hw_led](pattern=available_led_patterns[defualt_pattern])
-			_LOGGER.info("Loading hw: " + hw_led)
-		else:
-			_LOGGER.error("Hw board  " + hw_led + " not recognized, available " + str(available_hw.keys()))
-			raise LedManagerHermesMqttException("Hw board not recognized: " + str(hw_led))
+		
+		# Subscribe Other MQTT messages topics{'lisa/': 	['ssl/source', 'sst/source'],}
+		self.subscribe(SSL_src_msg, SST_src_msg)
+
+	def localized_sources_update(self):
+		# self.localized_energies
+		# map the energy level in a vector of RGBs
+		data_array_rgb = [[int(LED_MAX_VAL*e.energy_plane_xy), 0, 0] for e in self.localized_energies.energies]
+		self.pixels.set_all(data_array_rgb, persist_data=False, adding_policy='add') # Avoid having priority with other visual messages (e.g. dialogue states)
+		#print('tracked_sources_update: ' + str(data_array_rgb))
+	
+	def tracked_sources_update(self):
+		# self.tracked_energies
+		# map the energy level in a vector of RGBs
+		data_array_rgb = [[0, int(LED_MAX_VAL*e.energy_axis_z), int(LED_MAX_VAL*e.energy_plane_xy)] for e in self.tracked_energies.energies]
+		self.pixels.set_all(data_array_rgb, persist_data=False, adding_policy='max') # Avoid having priority with other visual messages (e.g. dialogue states)
+		#print('tracked_sources_update: '+ str(data_array_rgb)) 
 		
 	# -------------------------------------------------------------------------
 
@@ -251,7 +287,13 @@ class LedManagerHermesMqtt(HermesClient):
 		topic: typing.Optional[str] = None,
 	) -> GeneratorType:
 		# _LOGGER.debug("{}: {}".format(type(message), message))
-		if isinstance(message, AsrTextCaptured):
+		if isinstance(message, SSL_src_msg ):
+			self.localized_energies.update(message)
+			pass# threading.Thread(target=self.speak,).start()# args=(1,))
+		elif isinstance(message, SST_src_msg):
+			self.tracked_energies.update(message)
+			pass# threading.Thread(target=self.speak,).start()# args=(1,))
+		elif isinstance(message, AsrTextCaptured):
 			_LOGGER.debug("AsrTextCaptured: {}".format(message))
 			threading.Thread(target=self.think,).start()# args=(1,))
 			

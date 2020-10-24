@@ -1,6 +1,9 @@
 """
 from https://github.com/tinue/APA102_Pi
 This is the main driver module for APA102 LEDs
+
+Got from https://github.com/respeaker/4mics_hat
+
 """
 import spidev
 from math import ceil
