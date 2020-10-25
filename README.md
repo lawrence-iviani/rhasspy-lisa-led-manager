@@ -3,7 +3,7 @@
 [![Continous Integration](https://github.com/rhasspy/rhasspy-lisa-led-manager/workflows/Tests/badge.svg)](https://github.com/rhasspy/rhasspy-lisa-led-manager/actions)
 [![GitHub license](https://img.shields.io/github/license/rhasspy/rhasspy-lisa-led-manager.svg)](https://github.com/rhasspy/rhasspy-lisa-led-manager/blob/master/LICENSE)
 
-Implements `hermes/dialogueManager` functionality from [Hermes protocol](https://docs.snips.ai/reference/hermes).
+Uses `hermes/dialogueManager` functionality from [Hermes protocol](https://docs.snips.ai/reference/hermes) to activate/deactivate available led configurations.
 
 ## Installation
 
@@ -28,11 +28,9 @@ $ bin/rhasspy-lisa-led-manager <ARGS>
 ## Command-Line Options
 
 ```
-usage: rhasspy-lisa-led-manager [-h] [--wakeword-id WAKEWORD_ID]
-                               [--session-timeout SESSION_TIMEOUT]
-                               [--sound SOUND SOUND] [--host HOST]
-                               [--port PORT] [--username USERNAME]
-                               [--password PASSWORD] [--tls]
+usage: rhasspy-lisa-led-manager [-h] [--hw-board] [--led-pattern]
+                               [--host HOST] [--port PORT] 
+                               [--username USERNAME] [--password PASSWORD] [--tls]
                                [--tls-ca-certs TLS_CA_CERTS]
                                [--tls-certfile TLS_CERTFILE]
                                [--tls-keyfile TLS_KEYFILE]
@@ -43,12 +41,10 @@ usage: rhasspy-lisa-led-manager [-h] [--wakeword-id WAKEWORD_ID]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --wakeword-id WAKEWORD_ID
-                        Wakeword ID(s) to listen for (default=all)
-  --session-timeout SESSION_TIMEOUT
-                        Seconds before a dialogue session times out (default:
-                        30)
-  --sound SOUND SOUND   Add WAV id/path
+  --hw-board LISA_PLATFORM
+                        One of the available platforms: Respeaker4MicArray | Respeaker4MicArray | DummyBoard (No led)
+  --led-pattern LISA_LED_PATTERN
+                        One of the available imitation led patterns between GoogleHome | Alexa
   --host HOST           MQTT host (default: localhost)
   --port PORT           MQTT port (default: 1883)
   --username USERNAME   MQTT username
