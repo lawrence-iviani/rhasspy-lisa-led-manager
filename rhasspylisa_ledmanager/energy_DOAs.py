@@ -96,8 +96,8 @@ def calc_angles(x,y,z):
 	r = sqrt(XYsq + z**2)        	# r
 	incli = arctan2(z,sqrt(XYsq)) 	# theta
 	elev = pi/2.0 - incli 
-	# TODO: it seems on the vector this has to be inverted...
-	az = -arctan2(y,x)     	        # phi  
+	# TODO: it seems on the vector and respeaker this has to be inverted with a minus, this compensate (counter)clockwise mismatch on both
+	az = -arctan2(y,x)    	        # phi  
 	return r, elev, az
 
 

@@ -2,6 +2,7 @@
 
 import time
 import threading
+from numpy import roll
 
 try:
     import queue as Queue
@@ -62,7 +63,7 @@ class LedPattern:
 
 class Pixels:
 	
-	def __init__(self, pattern, n_leds):
+	def __init__(self, pattern, n_leds, led_n_circshift):
 		self.pattern = pattern(show=self.show, number=n_leds)
 		self.queue = Queue.Queue()
 		self.thread = threading.Thread(target=self._run)
@@ -70,6 +71,7 @@ class Pixels:
 		self.thread.start()
 		self._led_buffer = [0,0,0,0] * n_leds # [not_sure, r,g,b]
 		self.last_direction = None
+		self._led_n_circshift = led_n_circshift
 
 	def wakeup(self, direction=0):
 		self.last_direction = direction
@@ -105,9 +107,10 @@ class Pixels:
 	def pixels_number(self):
 		return len(self._led_buffer)//4
 
-	def set_all(self, list_rgb, persist_data=True, adding_policy='add'):
+	def set_all(self, list_rgb, persist_data=True, adding_policy='add', compensate_list=0):
 		# a flat list of length n_pixel*3 (r,g,b)
 		# Get energy and combine
+		# compensate_list,the in degre a circula shift
 		data = [0,0,0,0] * self.pixels_number
 		
 		ratio = len(list_rgb)/self.pixels_number
@@ -127,7 +130,8 @@ class Pixels:
 			data[n*4:(n+1)*4] = [0, r, g, b] # first element is always 0
 			#data[n*4:(n+1)*4] = [0, rgb[0], rgb[1], rgb[2]] 
 			l_idx = idx
-		
+		# compensate for any mismatch between angles and ledsdata = roll(data,-4*self.pixels_number//4)
+		data = roll(data, self.led_n_circshift*4)
 		self.show(data, persist_data=persist_data, adding_policy=adding_policy)
 
 	def _run(self):
@@ -150,14 +154,10 @@ class Pixels:
 			ubtract from data the persisted value,  or use min/max between data and persisted data
 		 
 		"""
-		# move in main class
 		if persist_data:
 			self.ledbuffer = data # save the buffer
 			for i in range(self.pixels_number):
-				# set r,g,b and white (always zero)
-				# become
 				self.set_led(i , int(data[4*i + 1]), int(data[4*i + 2]), int(data[4*i + 3]))
-				#self.everloop_leds[i] = (int(data[4*i + 1]), int(data[4*i + 2]), int(data[4*i + 3]), 0)
 		else:
 			data_set = [0,0,0]
 			for i in range(self.pixels_number):				
@@ -189,6 +189,13 @@ class Pixels:
 		# update the entire LED strip
 		self.update_leds()
 		
+	@property
+	def led_n_circshift(self):
+		return self._led_n_circshift
+		
+	@led_n_circshift.setter
+	def led_n_circshift(self, val):
+		self._led_n_circshift = val
 	
 	@property
 	def ledbuffer(self):
@@ -210,14 +217,15 @@ class Pixels:
 class Respeaker4MicArray(Pixels):
 
 	def __init__(self, pattern):
-		super().__init__(pattern=pattern, n_leds=RESPEAKER_4MIC_ARRAY_N_LEDS)
-		self.dev = APA102(num_led=n_leds)
+		led_n_circshift=-RESPEAKER_4MIC_ARRAY_N_LEDS//4
+		super().__init__(pattern=pattern, n_leds=RESPEAKER_4MIC_ARRAY_N_LEDS, led_n_circshift=led_n_circshift)
+		self.dev = APA102(num_led=self.pixels_number)
 		self.power = LED(5)
 		self.power.on()
 		
 	def set_led(self, i, r, g, b):
 		if 0 <= i < self.pixels_number:
-			 self.dev.set_pixel(i, r, g, b)
+			 self.dev.set_pixel(i, int(r), int(g), int(b) )
 		else:
 			print('Respeaker4MicArray: Index '+str(i)+' is out of range ')
 		
@@ -228,7 +236,8 @@ class Respeaker4MicArray(Pixels):
 class MatrixVoice(Pixels):
 
 	def __init__(self, pattern):
-		super().__init__(pattern=pattern, n_leds=ev_led.length )
+		led_n_circshift=0
+		super().__init__(pattern=pattern, n_leds=ev_led.length, led_n_circshift=led_n_circshift )
 		# self.PIXELS_N = ev_led.length
 		self._everloop_leds = ['black'] * self.pixels_number
 		# ev_led.set(self.everloop_leds)
@@ -248,7 +257,7 @@ class MatrixVoice(Pixels):
 class DummyBoard(Pixels):
 
 	def __init__(self, pattern):
-		super().__init__(pattern=pattern, n_leds=10)
+		super().__init__(pattern=pattern, n_leds=10, led_n_circshift=0)
 		self.dev = 'Dummy'
 		
 	def set_led(self, i, r, g, b):
@@ -261,7 +270,7 @@ class DummyBoard(Pixels):
 # Example
 if __name__ == '__main__':
 	
-	pixels = Respeaker4MicArray()
+	pixels = Respeaker4MicArray(pattern='Alexa')
 
 	while True:
 
