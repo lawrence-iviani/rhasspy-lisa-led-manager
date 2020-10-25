@@ -42,7 +42,7 @@ usage: rhasspy-lisa-led-manager [-h] [--hw-board] [--led-pattern]
 optional arguments:
   -h, --help            show this help message and exit
   --hw-board LISA_PLATFORM
-                        One of the available platforms: Respeaker4MicArray | Respeaker4MicArray | DummyBoard (No led)
+                        One of the available platforms: Respeaker4MicArray | MatrixVoice | DummyBoard (No led)
   --led-pattern LISA_LED_PATTERN
                         One of the available imitation led patterns between GoogleHome | Alexa
   --host HOST           MQTT host (default: localhost)
