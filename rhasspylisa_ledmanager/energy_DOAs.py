@@ -30,7 +30,7 @@ class base_sources:
 		azimuth = azimuth + pi #  Azimuth variates between -180,180 
 		E_xy, E_z = calc_energies(e, elev, azimuth)
 		spot_i = int( calc_spot_index(azimuth, self.n_spots)) #  self.n_spots//2 # if Azimuth variates between -180,180 need to shif the spot
-		print('[{}] E[{:.3f},{:.3f},{:.3f}]-Rect({:.3f},{:.3f},{:.3f}) -> Pol({:.3f},{:.3f},{:.3f})'.format(spot_i, e, E_xy, E_z, x, y, z,r, rad2deg(elev), rad2deg(azimuth)))
+		# print('[{}] E[{:.3f},{:.3f},{:.3f}]-Rect({:.3f},{:.3f},{:.3f}) -> Pol({:.3f},{:.3f},{:.3f})'.format(spot_i, e, E_xy, E_z, x, y, z,r, rad2deg(elev), rad2deg(azimuth)))
 		assert 0 <= spot_i < self.n_spots, "wrong spot: " + str(spot_i) + "-> 0:" + str(self.n_spots)
 		# https://docs.python.org/3.8/library/collections.html#collections.somenamedtuple._replace
 		self._decreas_all()

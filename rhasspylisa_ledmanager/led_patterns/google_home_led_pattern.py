@@ -100,4 +100,13 @@ class GoogleHomeLedPattern(LedPattern):
 	def off(self):
 		self.show([0] * 4 * self.pixels_number)
 
-
+	def blink(self):
+		
+		def _flash():
+			pixels = self.pixels
+			for i in range(1, 25):
+				self.show(pixels * i / 24)
+				time.sleep(0.01)
+		_flash()
+		time.sleep(0.2)
+		self.off()

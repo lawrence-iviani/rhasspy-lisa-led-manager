@@ -1,3 +1,4 @@
+"""Forked witbh a differnt scope From """
 """Hermes MQTT dialogue manager for Rhasspy"""
 import argparse
 import asyncio

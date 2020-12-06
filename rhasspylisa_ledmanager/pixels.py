@@ -72,6 +72,7 @@ class Pixels:
 		self._led_buffer = [0,0,0,0] * n_leds # [not_sure, r,g,b]
 		self.last_direction = None
 		self._led_n_circshift = led_n_circshift
+		print("Initiate Pixels with {} leds and circular shift of {} leds".format(n_leds, led_n_circshift))
 
 	def wakeup(self, direction=0):
 		self.last_direction = direction
@@ -95,6 +96,9 @@ class Pixels:
 		self.put(self.pattern.speak)
 
 	def off(self):
+		self.put(self.pattern.off)
+
+	def blink(self):
 		self.put(self.pattern.off)
 
 	def put(self, func):
@@ -237,7 +241,8 @@ class MatrixVoice(Pixels):
 
 	def __init__(self, pattern):
 		led_n_circshift=0
-		super().__init__(pattern=pattern, n_leds=ev_led.length, led_n_circshift=led_n_circshift )
+		n_leds=ev_led.length
+		super().__init__(pattern=pattern, n_leds=n_leds, led_n_circshift=led_n_circshift)
 		# self.PIXELS_N = ev_led.length
 		self._everloop_leds = ['black'] * self.pixels_number
 		# ev_led.set(self.everloop_leds)

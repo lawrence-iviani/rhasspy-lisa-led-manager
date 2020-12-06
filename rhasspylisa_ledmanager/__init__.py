@@ -177,6 +177,8 @@ class LedManagerHermesMqtt(HermesClient):
 		
 		# Subscribe Hermese Protocol topics
 		self.subscribe(
+			AsrStartListening,
+			AsrStopListening,
 			#DialogueStartSession,
 			DialogueSessionStarted,
 			DialogueSessionEnded,
@@ -224,14 +226,51 @@ class LedManagerHermesMqtt(HermesClient):
 		_LOGGER.debug("enter wakeup")
 		self.pixels.off()
 		self.pixels.wakeup()
-		# sleep(1)
-		# self.pixels.off()
 		_LOGGER.debug("exit wakeup")
 
+	def start_listening_intent(self):
+		_LOGGER.debug("enter start_listening_intent")
+		self.pixels.off()
+		self.pixels.speak()
+		_LOGGER.debug("exit start_listening_intent")
+		
+	def stop_listening_intent(self):
+		_LOGGER.debug("enter stop_listening_intent")
+		self.pixels.off()
+		_LOGGER.debug("exit stop_listening_intent")
+		
+	def end_session(self):
+		_LOGGER.debug("enter end_session")
+		self.pixels.off()
+		_LOGGER.debug("exit end_session")
+
+	def start_thinking(self):
+		_LOGGER.debug("enter think")
+		self.pixels.off()
+		self.pixels.think()
+		_LOGGER.debug("exit think")
+	
+	def end_thinking(self):
+		_LOGGER.debug("enter think")
+		self.pixels.off()
+		_LOGGER.debug("exit think")
+	
+	def not_recognized(self):
+		_LOGGER.debug("enter not_recognized")
+		self.pixels.blink()
+		self.pixels.blink()
+		_LOGGER.debug("exit not_recognized")
+	
+	def recognized(self):
+		_LOGGER.debug("enter recognized")
+		self.pixels.blink()
+		_LOGGER.debug("exit recognized")
+	
+# ------------------
 	def speak(self):
 		_LOGGER.debug("enter speak")
 		self.pixels.off()
-		self.pixels.speak()
+		#self.pixels.speak()
 		_LOGGER.debug("exit speak")
 		
 	def end_speak(self):
@@ -242,18 +281,10 @@ class LedManagerHermesMqtt(HermesClient):
 	def think(self):
 		_LOGGER.debug("enter think")
 		self.pixels.off()
-		self.pixels.think()
+		#self.pixels.think()
 		_LOGGER.debug("exit think")
 
-	def not_recognized(self):
-		_LOGGER.debug("enter not_recognized")
-		self.pixels.off()
-		_LOGGER.debug("exit not_recognized")
 	
-	def recognized(self):
-		_LOGGER.debug("enter recognized")
-		self.pixels.listen()
-		_LOGGER.debug("exit recognized")
 
 	async def on_message(
 		self,
@@ -271,8 +302,15 @@ class LedManagerHermesMqtt(HermesClient):
 			pass# threading.Thread(target=self.speak,).start()# args=(1,))
 		elif isinstance(message, AsrTextCaptured):
 			_LOGGER.debug("AsrTextCaptured: {}".format(message))
-			threading.Thread(target=self.think,).start()# args=(1,))
-
+			# start only if a message was identified
+			if len(message.text) > 0:
+				threading.Thread(target=self.start_thinking,).start()#
+		elif isinstance(message, AsrStartListening):
+			_LOGGER.debug("AsrStartListening: {}".format(message))
+			threading.Thread(target=self.start_listening_intent,).start()
+		elif isinstance(message, AsrStopListening):
+			_LOGGER.debug("AsrStopListening: {}".format(message))
+			threading.Thread(target=self.stop_listening_intent,).start()
 		elif isinstance(message, AudioPlayFinished):
 			# Audio output finished
 			# play_finished_event = self.message_events[AudioPlayFinished].get(message.id)
@@ -286,14 +324,14 @@ class LedManagerHermesMqtt(HermesClient):
 		# elif isinstance(message, DialogueStartSession):
 		elif isinstance(message, DialogueSessionStarted):
 			_LOGGER.debug("DialogueSessionStarted: {}".format(message))
-			threading.Thread(target=self.speak,).start()# args=(1,))
+			#threading.Thread(target=self.speak,).start()# args=(1,))
 			
 			# Start session
 			# async for start_result in self.handle_start(message):
 				# yield start_result
 		elif isinstance(message, DialogueSessionEnded):
 			_LOGGER.debug("DialogueSessionEnded: {}".format(message))
-			threading.Thread(target=self.end_speak,).start()# args=(1,))
+			threading.Thread(target=self.end_session,).start()
 			
 			# Start session
 			# async for start_result in self.handle_start(message):
@@ -311,7 +349,7 @@ class LedManagerHermesMqtt(HermesClient):
 				# yield end_result
 		elif isinstance(message, HotwordDetected):
 			_LOGGER.debug("HotwordDetected: {}".format(message))
-			threading.Thread(target=self.wakeup,).start()# args=(1,))
+			threading.Thread(target=self.wakeup,).start()
 			# Wakeword detected
 			# assert topic, "Missing topic"
 			# wakeword_id = HotwordDetected.get_wakeword_id(topic)
@@ -322,12 +360,12 @@ class LedManagerHermesMqtt(HermesClient):
 				# _LOGGER.warning("Ignoring wake word id=%s", wakeword_id)
 		elif isinstance(message, NluIntent):
 			_LOGGER.debug("NluIntent: {}".format(message))
-			threading.Thread(target=self.recognized,).start()# args=(1,))
+			threading.Thread(target=self.recognized,).start()
 			# Intent recognized
 			# await self.handle_recognized(message)
 		elif isinstance(message, NluIntentNotRecognized):
 			_LOGGER.debug("NluIntentNotRecognized: {}".format(message))
-			threading.Thread(target=self.not_recognized,).start()# args=(1,))
+			threading.Thread(target=self.not_recognized,).start()
 			# Intent not recognized
 			# async for play_error_result in self.maybe_play_sound(
 				# "error", site_id=message.site_id

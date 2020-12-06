@@ -65,3 +65,16 @@ class AlexaLedPattern(LedPattern):
 
     def off(self):
         self.show([0] * 4 * self.pixels_number)
+
+    def blink(self):
+		
+        def _flash():
+            pixels = [0, 0, 0, 24] * self.pixels_number
+            self.show(pixels)
+			
+        self.off()
+        _flash()
+        time.sleep(0.9)
+        _flash()
+        time.sleep(0.9)
+        self.off()
