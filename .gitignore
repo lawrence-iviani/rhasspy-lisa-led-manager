@@ -9,3 +9,4 @@ pyinstaller/
 download/
 etc/qemu-*
 build/
+lisa
